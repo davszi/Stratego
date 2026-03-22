@@ -137,7 +137,8 @@ Output ONLY one legal move in the exact format [A0 B0]. Nothing else.
             **kwargs,
         }
         
-        print("🚀 Connecting to Ollama at:", base_url)
+        # Only print connection message if explicitly enabled (for CLI use, not web UI)
+        # print("🚀 Connecting to Ollama at:", base_url)
         self.client = ChatOllama(model=model_name, base_url=base_url, model_kwargs=model_kwargs)
         
         # Simple move history tracking

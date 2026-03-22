@@ -153,3 +153,125 @@ role="initial")
 * After installing the package, you can use command `benchmark` to run the benchmark.
 * You can set `--p0`, `--p1`, as playing LLM and `--size`, `--game` as size of the board and number of games to play.
 * For example, `benchmark --p0 llama3.2:1b --p1 gemma3:1b --size 6 --game 4`
+
+## Web UI (Streamlit) - Human vs AI
+
+### Playing via Web Interface
+
+The Stratego project now includes a web interface powered by Streamlit, allowing you to play against AI opponents in a browser.
+
+#### Local Development
+
+**Prerequisites:**
+- Python 3.10+
+- Installed stratego package with web dependencies
+
+**Installation:**
+```bash
+# Install with web dependencies
+pip install -e ".[web]"
+```
+
+**Running the Web UI:**
+```bash
+# Start the Streamlit app
+streamlit run streamlit_app.py
+
+# The app will open at http://localhost:8501
+```
+
+**Features:**
+- Interactive board display with ASCII visualization
+- Real-time move validation
+- Move history tracking
+- Automatic game logging to CSV
+- Support for different AI models and prompt styles
+
+#### Deploying to HuggingFace Spaces
+
+**Step 1: Create a HuggingFace Space**
+1. Go to https://huggingface.co/spaces
+2. Click "Create new Space"
+3. Fill in:
+   - **Name**: `stratego-human-vs-ai`
+   - **Space Type**: Docker
+   - **Visibility**: Public
+4. Click "Create Space"
+
+**Step 2: Add Files to Space**
+
+You can push files via git:
+```bash
+# In your local repo
+cd stratego
+git remote add hf https://huggingface.co/spaces/{username}/stratego-human-vs-ai
+git add .
+git commit -m "Deploy Stratego web UI"
+git push hf main
+```
+
+Or upload directly via the Space's web UI.
+
+**Step 3: Configure Ollama Access**
+
+The HF Spaces deployment supports:
+- **Preset models**: mistral:7b, gemma3:1b, phi3:3.8b (via Ollama)
+- **Custom models**: Enter any Ollama-compatible model name
+- **SSH tunnel**: For remote Ollama servers on cloud-247
+
+If Ollama is on cloud-247:
+```bash
+# Setup SSH tunnel (on your local machine)
+ssh -L 11434:localhost:11434 {user}@cloud-247.rz.tu-clausthal.de
+```
+
+Then enter the Ollama URL when prompted in the web UI: `http://localhost:11434`
+
+**Access Your Deployment:**
+Once built, your space is live at: `https://huggingface.co/spaces/{username}/stratego-human-vs-ai`
+
+### Web UI Architecture
+
+**Components:**
+- `stratego/web/app.py` - Main Streamlit application (3 screens: welcome, config, game)
+- `stratego/web/game_controller.py` - Game state management
+- `stratego/web/config/` - Configuration, session management, agent building
+- `stratego/web/components/` - UI components (board display, move input)
+- `stratego/web/utils/` - Validation utilities
+
+**Game Flow:**
+1. Welcome screen - Select game mode (Standard 10x10, Duel 6x6, Custom 4-9x9)
+2. Config screen - Choose AI model and prompt style
+3. Active game - Play against AI:
+   - View ASCII board
+   - Enter moves in format `[A0 B0]`
+   - AI automatically generates response
+   - Track move history
+
+### Troubleshooting Web UI
+
+**"Failed to load AI model"**
+- Ensure Ollama is running: `ollama serve`
+- Verify connection: `curl http://localhost:11434/api/tags`
+- Or use mock agent (auto-fallback for testing)
+
+**"Illegal move" error**
+- Verify format: `[A0 B0]` (uppercase, space between coordinates)
+- Choose from legal moves shown in the UI
+- Check piece movement rules (scouts have multi-square movement)
+
+**Slow AI responses (20-30 seconds)**
+- Use faster model: `gemma3:1b` instead of `mistral:7b`
+- Model size trade-off: smaller = faster, larger = better reasoning
+
+**Game logs**
+- Stored in `logs/games/TIMESTAMP.csv`
+- Contains all moves, board states, and game metadata
+- Useful for training and analysis
+
+### Files for Deployment
+
+- `streamlit_app.py` - Entry point (required for HF Spaces)
+- `Dockerfile` - Container configuration
+- `.streamlit/config.toml` - Streamlit theming and settings
+- `pyproject.toml` - Package configuration with `[web]` dependencies
