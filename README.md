@@ -93,128 +93,29 @@ stratego-install-env
 
 
 
----
-
-## 3. Server Configuration (TU Clausthal SSH)
-
-These steps are specific to the TU Clausthal cloud environment to manage disk quota and cache locations.
-
-### Connecting via SSH
-
-Connect to the server using port forwarding for Ollama (Port 11437 in this example).
-
-```bash
-ssh -L 11437:localhost:11437 {user}@cloud-247.rz.tu-clausthal.de
-
-```
-
-### Managing Cache (Critical)
-
-To avoid filling up your home directory, redirect caches to the `/scratch` directory. Run these commands in your **Bash** terminal on the server.
-
-1. **Create Cache Directories:**
-```bash
-mkdir -p /scratch/{user}/vs_cache
-mkdir -p /scratch/{user}/hf_cache
-mkdir -p /scratch/{user}/pip_cache
-
-```
-
-
-2. **Export Environment Variables:**
-Run the following to set the paths for the current session:
-```bash
-export VSCODE_SERVER_CACHE=/scratch/{user}/vs_cache
-export HF_HOME=/scratch/{user}/hf_cache
-export HUGGINGFACE_HUB_CACHE=/scratch/{user}/hf_cache
-export TRANSFORMERS_CACHE=/scratch/{user}/hf_cache
-export HF_DATASETS_CACHE=/scratch/{user}/hf_cache
-export PIP_CACHE_DIR=/scratch/{user}/pip_cache
-
-```
-
-
-3. **Permanent Configuration (Optional):**
-To make these changes permanent, edit your `.cshrc` file:
-```bash
-nano ~/.cshrc
-
-```
-
-
-Add lines such as `setenv HF_HOME /scratch/{user}/hf_cache` for each variable listed above. Press `Ctrl+X` to save and exit.
-4. **Cleanup:**
-If you have existing cache in your home directory, clear it to free up space:
-```bash
-rm -r ~/.cache
-
-```
-
-
-*Restart VS Code to apply these changes.*
-
----
-
-## 4. Setting up Ollama on SSH Server
-
-If you wish to host your own Ollama instance on the server:
-
-### Installation
-
-1. **Prepare Directories:**
-```bash
-mkdir -p /scratch/{user}/ollama_bin
-mkdir -p /scratch/{user}/ollama_model
-mkdir -p /scratch/{user}/ollama_tmp
-cd /scratch/{user}/ollama_bin
-
-```
-
-
-2. **Download and Extract:**
-```bash
-curl -fL -o ollama-linux-amd64.tar.zst https://github.com/ollama/ollama/releases/download/v0.14.0/ollama-linux-amd64.tar.zst
-tar --use-compress-program=unzstd -xvf ollama-linux-amd64.tar.zst
-
-```
-
-
-3. **Configure Environment:**
-Set the paths so Ollama knows where to store models and temporary files.
-```bash
-export OLLAMA_MODELS=/scratch/{user}/ollama_model
-export OLLAMA_TMPDIR=/scratch/{user}/ollama_tmp
-export OLLAMA_HOST=0.0.0.0:{your_host_port}
-export PATH="/scratch/{user}/ollama_bin/bin:$PATH"
-
-```
 
 
 
-### Running the Server
+### Setting up Ollama:
 
-It is recommended to run the server inside a `tmux` session so it persists after you disconnect.
-
-1. Start a new session: `tmux new -s ollama_server`
+1. Install Ollama: 
+For macOS & Linux: `curl -fsSL https://ollama.com/install.sh | sh`
+For Windows (Powershell): `irm https://ollama.com/install.ps1 | iex` 
 2. Start Ollama: `ollama serve`
-3. Detach: Press `Ctrl+B` then `D`.
+
 
 ### Managing Models
 
-Open a **new** local terminal (connected via SSH) to interact with the running server.
-
 * **Check available models:**
 ```bash
-curl -s http://127.0.0.1:11435/api/tags | jq -r '.models[].name'
+`ollama list`
 
 ```
 
 
 * **Pull (Download) a new model:**
 ```bash
-curl -X POST http://127.0.0.1:{your_host_port}/api/pull \
-     -H 'Content-Type: application/json' \
-     -d '{"name":"mistral:7b"}'
+`ollama pull mistral:7b'
 
 ```
 
